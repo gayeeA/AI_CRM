@@ -455,11 +455,5 @@ MIT License - See LICENSE file for details
 
 This is an assignment project. For questions or improvements, please refer to the assignment guidelines.
 
----
-
-**Submission Details**:
-- GitHub Repository: [Your Repo URL]
-- Video Recording: [Your Video URL]
-- Assignment Deadline: 36 hours from start
 
 **Built with ❤️ using LangGraph + Groq + React**
