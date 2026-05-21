@@ -1,1 +1,4 @@
 node_modules/
+
+# Ignore local environment secrets
+backend/.env
