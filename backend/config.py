@@ -47,6 +47,7 @@ class Settings(BaseSettings):
 DECOMMISSIONED_GROQ_MODELS = {
     "gemma2-9b-it": "llama-3.3-70b-versatile",
     "gemma2-9b": "llama-3.3-70b-versatile",
+    "gemma2-3b": "llama-3.3-70b-versatile",
 }
 
 settings = Settings()
