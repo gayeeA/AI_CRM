@@ -132,8 +132,9 @@ class LogInteractionArguments(BaseModel):
 
 
 class EditInteractionArguments(BaseModel):
-    current_data: Dict[str, Any]
-    user_input: StrictStr
+    current: Dict[str, Any]
+    updates: Dict[str, Any]
+
 
 
 class GetInteractionArguments(BaseModel):

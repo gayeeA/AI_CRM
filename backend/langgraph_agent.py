@@ -27,6 +27,7 @@ from schemas import ToolCall
 from tools import execute_tool, _extract_json_from_text
 
 
+
 class AgentState(TypedDict):
     user_input: str
     current_interaction: Dict[str, Any]
@@ -59,8 +60,12 @@ For `log_interaction`, return arguments with:
 - user_input: the full user message
 
 For `edit_interaction`, return arguments with:
-- current_data: the current interaction state
-- user_input: the full user message
+- current: the current interaction state
+- updates: ONLY the fields to change (partial)
+
+Important:
+- ALWAYS use the key `updates` (not `changed_fields`, `data`, or `fields`).
+
 
 For `get_interaction` and `delete_interaction`, return arguments with:
 - interaction_id: integer
@@ -127,14 +132,20 @@ def execute_tool_node(state: AgentState) -> AgentState:
     arguments = tool_call["arguments"]
 
     state["tool_result"] = execute_tool(tool_name, **arguments)
-    state["updated_interaction_data"] = arguments.get("current_data", {})
 
-    if state["tool_result"].get("success") and state["tool_result"].get("data"):
+    # Normalize updated_interaction_data across tools.
+    if state["tool_result"].get("success") and state["tool_result"].get("updated_interaction_data"):
+        state["updated_interaction_data"] = state["tool_result"]["updated_interaction_data"]
+    elif state["tool_result"].get("success") and state["tool_result"].get("data"):
         state["updated_interaction_data"] = state["tool_result"]["data"]
-    if state["tool_result"].get("success") and state["tool_result"].get("updated_fields"):
-        updated = dict(state["updated_interaction_data"])
+    elif state["tool_result"].get("success") and state["tool_result"].get("updated_fields"):
+        base = arguments.get("current", arguments.get("current_data", {}))
+        updated = dict(base)
         updated.update(state["tool_result"]["updated_fields"])
         state["updated_interaction_data"] = updated
+    else:
+        state["updated_interaction_data"] = arguments.get("current", arguments.get("current_data", {}))
+
 
     return state
 

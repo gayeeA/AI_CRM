@@ -38,6 +38,17 @@ interface FormState {
   hasChanges: boolean;
 }
 
+const normalizeSentiment = (
+  sentiment: string | undefined
+): 'Positive' | 'Neutral' | 'Negative' | undefined => {
+  if (!sentiment) return undefined;
+  const normalized = sentiment.trim().toLowerCase();
+  if (normalized === 'positive') return 'Positive';
+  if (normalized === 'neutral') return 'Neutral';
+  if (normalized === 'negative') return 'Negative';
+  return undefined;
+};
+
 const initialState: FormState = {
   currentInteraction: {
     hcp_name: '',
@@ -75,9 +86,13 @@ const formSlice = createSlice({
     // Update entire interaction data
     updateInteraction: (state, action: PayloadAction<Partial<InteractionData>>) => {
       if (state.currentInteraction) {
+        const normalizedSentiment = normalizeSentiment(
+          action.payload.sentiment as string | undefined
+        );
         state.currentInteraction = {
           ...state.currentInteraction,
           ...action.payload,
+          ...(normalizedSentiment ? { sentiment: normalizedSentiment } : {}),
         };
         state.hasChanges = true;
       }
@@ -148,7 +163,11 @@ const formSlice = createSlice({
 
     // Set current interaction (from API)
     setCurrentInteraction: (state, action: PayloadAction<InteractionData>) => {
-      state.currentInteraction = action.payload;
+      state.currentInteraction = {
+        ...action.payload,
+        sentiment:
+          normalizeSentiment(action.payload.sentiment) ?? action.payload.sentiment,
+      };
       state.hasChanges = false;
     },
 

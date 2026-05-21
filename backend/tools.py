@@ -21,7 +21,32 @@ from schemas import (
     DeleteInteractionArguments,
     SummarizeInteractionArguments,
 )
+
 from llm import chat_completion
+
+
+def _tool_normalize_edit_args(updates: Any) -> Dict[str, Any]:
+    """Normalize mis-shaped edit payloads.
+
+    Some callers may send:
+    - {"changed_fields": {...}}
+    - {"data": {...}}
+    - the correct payload: {...} (already the updates)
+    """
+    if updates is None:
+        return {}
+    if not isinstance(updates, dict):
+        return {}
+    if "updates" in updates and isinstance(updates["updates"], dict):
+        return updates["updates"]
+    if "changed_fields" in updates and isinstance(updates["changed_fields"], dict):
+        return updates["changed_fields"]
+    if "data" in updates and isinstance(updates["data"], dict):
+        return updates["data"]
+    return updates
+
+
+
 
 
 def call_groq_llm(prompt: str, system_prompt: Optional[str] = None) -> str:
@@ -159,67 +184,81 @@ If a field is absent, set it to null or an empty list as appropriate."""
 # ============================================================================
 # TOOL 2: EDIT_INTERACTION
 # ============================================================================
-def edit_interaction(current_data: Dict[str, Any], user_input: str) -> Dict[str, Any]:
+def edit_interaction(current: Dict[str, Any], updates: Dict[str, Any]) -> Dict[str, Any]:
+    """Apply validated partial updates to the current interaction.
+
+    Expected call signature (strict):
+      - current: current interaction state (dict)
+      - updates: ONLY the fields to change (partial dict)
+
+    Robustness:
+      If upstream accidentally nests the fields under fallback keys like
+      `changed_fields` or `data`, we accept them.
+
+    Returns:
+      - success: bool
+      - tool: str
+      - message: str
+      - updated_interaction_data: dict (merged)
+      - updated_fields: dict (only the provided/changed fields)
     """
-    Identify field updates and validate them against strict schemas.
-    """
-    system_prompt = """You are an expert at interpreting update instructions for a healthcare interaction.
-
-Return ONLY a JSON object containing only the fields to update.
-Possible fields are:
-- hcp_name
-- date
-- time
-- interaction_type
-- attendees
-- topics_discussed
-- materials_shared
-- samples_distributed
-- sentiment
-- outcomes
-- follow_up_actions
-
-materials_shared MUST be a list of objects with a single key `type`.
-Do not return raw strings in materials_shared.
-If nothing should change, return {}."""
-
-    response_text = call_groq_llm(user_input, system_prompt)
-    try:
-        payload = _extract_json_from_text(response_text)
-    except Exception as exc:
-        return {
-            "success": False,
-            "tool": "edit_interaction",
-            "message": "LLM output did not contain valid JSON",
-            "error": str(exc),
-            "raw_output": response_text,
-        }
-
-    if not payload:
-        return {
-            "success": False,
-            "tool": "edit_interaction",
-            "message": "No changes identified.",
-            "updated_fields": {},
-        }
 
     try:
-        validated = HCPInteractionUpdate.parse_obj(payload)
+        # Normalize fallback shapes from misbehaving callers.
+        if not isinstance(updates, dict):
+            # If a wrong type is passed, fail cleanly.
+            return {
+                "success": False,
+                "tool": "edit_interaction",
+                "message": "`updates` must be an object",
+                "error": {"type": str(type(updates))},
+            }
+
+        fallback_updates = updates
+        if "updates" not in updates and isinstance(updates, dict):
+            # LLM might send: {changed_fields: {...}} or {data: {...}}
+            if "changed_fields" in updates and isinstance(updates["changed_fields"], dict):
+                fallback_updates = updates["changed_fields"]
+            elif "data" in updates and isinstance(updates["data"], dict):
+                fallback_updates = updates["data"]
+
+        if fallback_updates is None:
+            fallback_updates = {}
+
+        # Validate provided partial fields against schema.
+        if fallback_updates:
+            validated = HCPInteractionUpdate.parse_obj(fallback_updates)
+            updated_fields = validated.dict(exclude_none=True)
+        else:
+            updated_fields = {}
+
+        # Merge partial updates onto existing state.
+        merged = dict(current or {})
+        merged.update(updated_fields)
+
+        return {
+            "success": True,
+            "tool": "edit_interaction",
+            "message": "Interaction updated successfully",
+            "updated_fields": updated_fields,
+            "updated_interaction_data": merged,
+        }
+
     except ValidationError as exc:
         return {
             "success": False,
             "tool": "edit_interaction",
-            "message": "LLM output did not match the update schema",
+            "message": "Provided updates did not match the update schema",
             "error": exc.errors(),
-            "raw_output": payload,
+        }
+    except Exception as exc:
+        return {
+            "success": False,
+            "tool": "edit_interaction",
+            "message": "Tool execution failed",
+            "error": str(exc),
         }
 
-    return {
-        "success": True,
-        "tool": "edit_interaction",
-        "message": "Parsed editable fields",
-        "updated_fields": validated.dict(exclude_none=True),
-    }
 
 
 # ============================================================================

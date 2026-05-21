@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import {
-  updateInteraction,
+  setCurrentInteraction,
   setAISuggestions,
   selectCurrentInteraction,
 } from '../store/slices/formSlice';
@@ -66,26 +66,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ interactionId }) => {
 
       // Update form with response data
       if (response.updated_interaction) {
-        dispatch(
-          updateInteraction({
-            id: response.updated_interaction.id,
-            hcp_name: response.updated_interaction.hcp_name,
-            hcp_type: response.updated_interaction.hcp_type,
-            interaction_type: response.updated_interaction.interaction_type,
-            date: response.updated_interaction.date,
-            time: response.updated_interaction.time,
-            attendees: response.updated_interaction.attendees,
-            topics_discussed: response.updated_interaction.topics_discussed,
-            materials_shared: response.updated_interaction.materials_shared,
-            samples_distributed: response.updated_interaction.samples_distributed,
-            sentiment: response.updated_interaction.sentiment,
-            outcomes: response.updated_interaction.outcomes,
-            follow_up_actions: response.updated_interaction.follow_up_actions,
-            ai_suggestions: response.updated_interaction.ai_suggestions,
-            extracted_entities: response.updated_interaction.extracted_entities,
-            ai_summary: response.updated_interaction.ai_summary,
-          })
-        );
+        dispatch(setCurrentInteraction(response.updated_interaction));
 
         if (response.updated_interaction.ai_suggestions) {
           dispatch(setAISuggestions(response.updated_interaction.ai_suggestions));

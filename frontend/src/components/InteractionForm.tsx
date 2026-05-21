@@ -68,6 +68,9 @@ export const InteractionForm: React.FC<InteractionFormProps> = ({ readOnly = tru
     dispatch(setSentiment(sentiment));
   };
 
+  const normalizeSentiment = (value: string | undefined) =>
+    value?.trim().toLowerCase() as 'positive' | 'neutral' | 'negative' | undefined;
+
   return (
     <div className="interaction-form">
       <h2>Log HCP Interaction</h2>
@@ -268,7 +271,10 @@ export const InteractionForm: React.FC<InteractionFormProps> = ({ readOnly = tru
                 type="radio"
                 name="sentiment"
                 value={sentiment}
-                checked={interaction.sentiment === sentiment}
+                checked={
+                  normalizeSentiment(interaction.sentiment) ===
+                  sentiment.toLowerCase()
+                }
                 onChange={() => handleSentimentChange(sentiment)}
                 disabled={readOnly}
               />
