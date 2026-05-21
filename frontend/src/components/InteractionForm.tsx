@@ -259,6 +259,15 @@ export const InteractionForm: React.FC<InteractionFormProps> = ({ readOnly = tru
             </div>
           )}
         </div>
+
+        {/* Voice Note Button (UI only) */}
+        {!readOnly && (
+          <div className="voice-note-section">
+            <button type="button" className="voice-note-btn">
+              🎤 Summarize from Voice Note (Requires Consent)
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Sentiment Section */}
@@ -272,8 +281,7 @@ export const InteractionForm: React.FC<InteractionFormProps> = ({ readOnly = tru
                 name="sentiment"
                 value={sentiment}
                 checked={
-                  normalizeSentiment(interaction.sentiment) ===
-                  sentiment.toLowerCase()
+                  normalizeSentiment(interaction.sentiment) === sentiment.toLowerCase()
                 }
                 onChange={() => handleSentimentChange(sentiment)}
                 disabled={readOnly}
@@ -312,6 +320,29 @@ export const InteractionForm: React.FC<InteractionFormProps> = ({ readOnly = tru
             readOnly={readOnly}
             rows={2}
           />
+        </div>
+      </div>
+
+      {/* Optional: AI Summary */}
+      {interaction.ai_summary && (
+        <div className="form-section ai-summary-section">
+          <h3>AI Summary</h3>
+          <div className="ai-summary-text">{interaction.ai_summary}</div>
+        </div>
+      )}
+
+      {/* Optional: Metadata */}
+      <div className="form-section interaction-metadata-section">
+        <h3>Metadata</h3>
+        <div className="metadata-grid">
+          <div className="metadata-row">
+            <span className="metadata-key">ID</span>
+            <span className="metadata-value">{interaction.id ?? '-'}</span>
+          </div>
+          <div className="metadata-row">
+            <span className="metadata-key">Created At</span>
+            <span className="metadata-value">{(interaction as any).created_at ?? (interaction as any).createdAt ?? '-'}</span>
+          </div>
         </div>
       </div>
 

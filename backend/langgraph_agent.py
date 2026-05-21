@@ -158,7 +158,7 @@ def generate_ai_response_node(state: AgentState) -> AgentState:
     ai_messages = [
         {
             "role": "system",
-            "content": "You are a helpful AI assistant. Summarize the outcome of the tool execution in three short bullets.",
+            "content": "You are a CRM assistant. Return ONLY a single short, clean, action-based confirmation sentence. No bullet points. No explanations. No mention of tool execution.",
         },
         {
             "role": "user",
@@ -170,8 +170,19 @@ def generate_ai_response_node(state: AgentState) -> AgentState:
         },
     ]
 
-    raw = _groq_call(ai_messages, temperature=0.5, max_tokens=250)
-    state["ai_response"] = raw.strip()
+    raw = _groq_call(ai_messages, temperature=0.2, max_tokens=80)
+    cleaned = raw.strip()
+
+    # Hard-trim: keep only the first non-empty line (prevents bullets).
+    lines = [ln.strip() for ln in cleaned.splitlines() if ln.strip()]
+    if lines:
+        cleaned = lines[0]
+
+    # Remove leading list markers if present.
+    cleaned = cleaned.replace("•", "").replace("-", "").strip()
+    cleaned = cleaned.lstrip("0123456789. ").strip()
+
+    state["ai_response"] = cleaned
 
     next_steps: List[str] = []
     for line in raw.split("\n"):

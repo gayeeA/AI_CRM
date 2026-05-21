@@ -253,6 +253,79 @@
   border-color: var(--secondary-color);
 }
 
+/* Voice Note Button */
+.voice-note-section {
+  margin-top: 16px;
+}
+
+.voice-note-btn {
+  padding: 10px 12px;
+  background-color: var(--tertiary-color);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.voice-note-btn:hover {
+  background-color: #e5e7eb;
+  border-color: var(--secondary-color);
+}
+
+/* Optional: AI Summary */
+.ai-summary-section {
+  background-color: #f0f9ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 6px;
+  padding: 12px;
+}
+
+.ai-summary-section h3 {
+  color: #0369a1;
+  margin-bottom: 8px;
+}
+
+.ai-summary-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+  white-space: pre-wrap;
+}
+
+/* Optional: Metadata */
+.interaction-metadata-section {
+  background-color: #f9fafb;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 12px;
+}
+
+.metadata-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.metadata-row {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+}
+
+.metadata-key {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text-secondary);
+  width: 90px;
+}
+
+.metadata-value {
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
 /* AI Suggestions */
 .ai-suggestions {
   background-color: #f0f9ff;
